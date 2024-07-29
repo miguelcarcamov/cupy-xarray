@@ -1,4 +1,5 @@
 import cupy as cp
+import numpy as np
 from xarray import (
     DataArray,
     Dataset,
@@ -62,20 +63,14 @@ class CupyDataArrayAccessor:
 
         """
         if isinstance(self.da.data, dask_array_type):
-            return DataArray(
-                data=self.da.data.map_blocks(cp.asarray),
-                coords=self.da.coords,
-                dims=self.da.dims,
-                name=self.da.name,
-                attrs=self.da.attrs,
-            )
-        return DataArray(
-            data=cp.asarray(self.da.data),
-            coords=self.da.coords,
-            dims=self.da.dims,
-            name=self.da.name,
-            attrs=self.da.attrs,
-        )
+            print(self.da.data.dtype)
+            if self.da.data.dtype is not np.dtype('object'):
+                print("Converting")
+                data = self.da.data.map_blocks(cp.asarray)
+            else:
+                data = self.da.data
+            return self.da.copy(data=data)
+        return self.da.copy(data=cp.asarray(self.da.data))
 
     def as_numpy(self):
         """
